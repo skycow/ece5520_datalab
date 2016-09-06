@@ -263,7 +263,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  return (x>>31)&1;
+  return (~(x>>31))&((~(!x))&1);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
