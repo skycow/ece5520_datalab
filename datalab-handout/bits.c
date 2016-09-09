@@ -198,7 +198,33 @@ int logicalShift(int x, int n) {
  *   Rating: 4
  */
 int bitCount(int x) {
-  return 2;
+  int m1=(0x55)+(0x55<<8)+(0x55<<16)+(0x55<<24);
+  int m2=(0x33)+(0x33<<8)+(0x33<<16)+(0x33<<24);
+  int m4=(0x0f)+(0x0f<<8)+(0x0f<<16)+(0x0f<<24);
+  // int m8=0;
+  
+  // int m16=0;
+  // m8=(0xff)+(0xff<<16);
+  // m16=(0xff)+(0xff<<8);
+  
+  // x = (x & m1 ) + ((x >>  1) & m1 ); //put count of each  2 bits into those  2 bits 
+  //   x = (x & m2 ) + ((x >>  2) & m2 ); //put count of each  4 bits into those  4 bits 
+  //   x = (x & m4 ) + ((x >>  4) & m4 ); //put count of each  8 bits into those  8 bits 
+  //   x = (x & m8 ) + ((x >>  8) & m8 ); //put count of each 16 bits into those 16 bits 
+  //   x = (x & m16) + ((x >> 16) & m16); //put count of each 32 bits into those 32 bits
+  
+  //   return x;
+    
+    x += ~((x >> 1) & m1)+1;             //put count of each 2 bits into those 2 bits
+    x = (x & m2) + ((x >> 2) & m2); //put count of each 4 bits into those 4 bits 
+    x = (x + (x >> 4)) & m4;        //put count of each 8 bits into those 8 bits 
+    x += x >>  8;  //put count of each 16 bits into their lowest 8 bits
+    x += x >> 16;  //put count of each 32 bits into their lowest 8 bits
+    // x += x >> 32;  //put count of each 64 bits into their lowest 8 bits
+    return x & 0x7f;
+  
+  
+  // return 2;
 }
 /* 
  * bang - Compute !x without using !
@@ -211,7 +237,7 @@ int bang(int x) {
   int one = (x>>16)|x;
   int two = (one>>8)|one;
   int three = (two>>4)|two;
-  return 1>>(three&15);
+  return 1>>(three&0xf);
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -245,7 +271,11 @@ int fitsBits(int x, int n) {
 int divpwr2(int x, int n) {
   //return (~(!0));
    // return (x>>n)&(~((0)|((!(x&1))&(!(!n)))));//+((((~(!n))<<31)>>31)&(((x&1)<<31)>>31));//&((~(!n))));//-((x&1)&(~(!n)));
-   return (x>>n)+(x&(!(!n)));
+   //return (x>>n)|((x&(!(!n))));
+  // int one = (x>>n);
+  // return one + (((~(one>>31))+1)&(!(!n))&(x&1));
+  // return one + ((((one>>31)&1) !(one>>31)))&(!(!n))&(x&1)&(!(one&1)));
+   return (x + ((x >> 31) & ((1 << n) + ~0))) >> n;
 }
 /* 
  * negate - return -x 
@@ -325,5 +355,11 @@ unsigned float_i2f(int x) {
  *   Rating: 4
  */
 unsigned float_twice(unsigned uf) {
-  return 2;
+  // if(!uf){
+  //   return uf|uf;
+  // }
+  
+  
+  
+  return -2147483648;
 }
