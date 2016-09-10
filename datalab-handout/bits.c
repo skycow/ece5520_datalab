@@ -329,7 +329,11 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+if((uf&0x7fc00000) ^ 0x7fc00000){
+ return uf+0x80000000;
+}else{
+ return uf;
+}
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -358,8 +362,30 @@ unsigned float_twice(unsigned uf) {
   // if(!uf){
   //   return uf|uf;
   // }
-  
-  
-  
-  return -2147483648;
+if(!uf){return uf;}
+//if(uf == 0x80000000){return uf;}
+if(uf == 1){return 2;}
+ if((uf&0x7fc00000) ^ 0x7fc00000){
+ 
+//  unsigned frac = uf& 0x7fffff;
+//  unsigned dub = frac+frac;
+//  unsigned dub2 = dub&0x7fffff;
+//  unsigned ret = uf&(~0x7fffff);
+//  return dub2+ret;
+
+unsigned exp = uf&0x7fc00000;
+if(exp){
+unsigned exp2 = (exp+0x800000);
+unsigned exp3 = exp2&0x7fc00000;
+unsigned uf2 = uf&(~0x7fc00000);
+return (uf2 + exp3);
+} else {
+unsigned frac = uf& 0x7fffff;
+unsigned dub = frac+frac;
+unsigned dub2 = dub&0x7fffff;  
+unsigned ret = uf&(~0x7fffff);
+return dub2+ret;
+}}else{
+return uf;
+}
 }
