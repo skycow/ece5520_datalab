@@ -258,7 +258,11 @@ int tmin(void) {
  *   Rating: 2
  */
 int fitsBits(int x, int n) {
-  return 2;
+  int mask = x >> 31;
+  int shift = n + (~0);
+  int temp1 = ~x & mask;
+  int temp2 = x & ~mask;
+  return !((temp1 + temp2) >> shift);
 }
 /* 
  * divpwr2 - Compute x/(2^n), for 0 <= n <= 30
@@ -305,7 +309,16 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return (((~y+1)+x)>>31)|(!((~y+1)+x));
+  // return (((~y+1)+x)>>31)|(!((~y+1)+x));
+  int negX = ~x+1;
+  int addY = negX + y;
+  int checkSign = addY >> 31 & 1;
+  int leftBit = 1 << 31;
+  int xLeft = leftBit & x;
+  int yLeft = leftBit & y;
+  int xOrd = xLeft ^ yLeft;
+  xOrd = (xOrd >> 31) & 1;
+  return (xOrd & (xLeft>>31)) | (!checkSign & !xOrd);
 }
 /*
  * ilog2 - return floor(log base 2 of x), where x > 0
@@ -315,7 +328,29 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
-  return 2;
+  int out = 0;
+
+  int a = (!!(x >> 16)) << 31 >> 31;
+  out = out + (a & 16);
+  x = x >> (a & 16);
+
+  a = (!!(x >> 8)) << 31 >> 31;
+  out = out + (a & 8);
+  x = x >> (a & 8);
+
+  a = (!!(x >> 4)) << 31 >> 31;
+  out = out + (a & 4);
+  x = x >> (a & 4);
+
+  a = (!!(x >> 2)) << 31 >> 31;
+  out = out + (a & 2);
+  x = x >> (a & 2);
+
+  a = (!!(x >> 1)) << 31 >> 31;
+  out = out + (a & 1);
+
+
+  return out;
 }
 /* 
  * float_neg - Return bit-level equivalent of expression -f for
@@ -345,7 +380,38 @@ if((uf&0x7fc00000) ^ 0x7fc00000){
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  return 2;
+  unsigned shiftLeft = 0;
+  unsigned afterShift;
+  unsigned tmp;
+  unsigned flag;
+  unsigned absX = x;
+  unsigned sign = 0;
+
+  if(x == 0)
+    return 0;
+  if(x < 0)
+  {
+    sign = 0x80000000;
+    absX = -x;
+  }
+  afterShift = absX;
+
+  while(1)
+  {
+    tmp = afterShift;
+    afterShift = afterShift << 1;
+    shiftLeft++;
+    if(tmp & 0x80000000)
+      break;
+  }
+  if((afterShift & 0x01ff) > 0x0100)
+    flag = 1;
+  else if((afterShift & 0x03ff) == 0x0300)
+    flag = 1;
+  else
+    flag = 0;
+
+  return sign + (afterShift >> 9) + ((159 - shiftLeft) << 23) + flag;
 }
 /* 
  * float_twice - Return bit-level equivalent of expression 2*f for
@@ -365,7 +431,7 @@ unsigned float_twice(unsigned uf) {
 if(!uf){return uf;}
 //if(uf == 0x80000000){return uf;}
 if(uf == 1){return 2;}
- if((uf&0x7fc00000) ^ 0x7fc00000){
+ if((uf&0x7f800000) ^ 0x7f800000){
  
 //  unsigned frac = uf& 0x7fffff;
 //  unsigned dub = frac+frac;
@@ -373,18 +439,18 @@ if(uf == 1){return 2;}
 //  unsigned ret = uf&(~0x7fffff);
 //  return dub2+ret;
 
-unsigned exp = uf&0x7fc00000;
+unsigned exp = uf&0x7f800000;
 if(exp){
 unsigned exp2 = (exp+0x800000);
-unsigned exp3 = exp2&0x7fc00000;
-unsigned uf2 = uf&(~0x7fc00000);
+unsigned exp3 = exp2&0x7f800000;
+unsigned uf2 = uf&(~0x7f800000);
 return (uf2 + exp3);
 } else {
 unsigned frac = uf& 0x7fffff;
 unsigned dub = frac+frac;
-unsigned dub2 = dub&0x7fffff;  
+//unsigned dub2 = dub&0x7fffff;  
 unsigned ret = uf&(~0x7fffff);
-return dub2+ret;
+return dub+ret;
 }}else{
 return uf;
 }
